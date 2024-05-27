@@ -40,7 +40,55 @@ impl StateMachine for ClothesMachine {
     type Transition = ClothesAction;
 
     fn next_state(starting_state: &ClothesState, t: &ClothesAction) -> ClothesState {
-        todo!("Exercise 3")
+        match t {
+            ClothesAction::Wear => {
+                match starting_state {
+                    ClothesState::Tattered => ClothesState::Tattered,
+                    ClothesState::Clean(i) | ClothesState::Dirty(i) | ClothesState::Wet(i) => {
+                        let life = i - 1;
+                        if life == 0 {
+                            ClothesState::Tattered
+                        } else {
+                            ClothesState::Dirty(life)
+                        }
+                    } 
+                }
+            },
+            ClothesAction::Wash => {
+                match starting_state {
+                    ClothesState::Tattered => ClothesState::Tattered,
+                    ClothesState::Clean(i) | ClothesState::Dirty(i) | ClothesState::Wet(i) => {
+                        let life = i - 1;
+                        if life == 0 {
+                            ClothesState::Tattered
+                        } else {
+                            ClothesState::Wet(life)
+                        }
+                    } 
+                }
+            },
+            ClothesAction::Dry => {
+                match starting_state {
+                    ClothesState::Tattered => ClothesState::Tattered,
+                    ClothesState::Clean(i) | ClothesState::Wet(i) => {
+                        let life = i - 1;
+                        if life == 0 {
+                            ClothesState::Tattered
+                        } else {
+                            ClothesState::Clean(life)
+                        }
+                    },
+                    ClothesState::Dirty(i) => {
+                        let life = i - 1;
+                        if life == 0 {
+                            ClothesState::Tattered
+                        } else {
+                            ClothesState::Dirty(life)
+                        }
+                    } 
+                }
+            }
+        }
     }
 }
 

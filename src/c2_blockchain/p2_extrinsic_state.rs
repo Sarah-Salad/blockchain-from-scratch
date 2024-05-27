@@ -31,12 +31,24 @@ pub struct Header {
 impl Header {
     /// Returns a new valid genesis header.
     fn genesis() -> Self {
-        todo!("Exercise 1")
+        Self {
+            parent: 0,
+            height: 0,
+            extrinsic: 0,
+            state: 0,
+            consensus_digest: (),
+        }
     }
 
     /// Create and return a valid child header.
     fn child(&self, extrinsic: u64) -> Self {
-        todo!("Exercise 2")
+        Self {
+            parent: hash(&self),
+            height: &self.height + 1,
+            extrinsic: extrinsic,
+            state: extrinsic + &self.extrinsic,
+            consensus_digest: (),
+        }
     }
 
     /// Verify that all the given headers form a valid chain from this header to the tip.
@@ -48,7 +60,18 @@ impl Header {
     /// So in order for a block to verify, we must have that relationship between the extrinsic,
     /// the previous state, and the current state.
     fn verify_sub_chain(&self, chain: &[Header]) -> bool {
-        todo!("Exercise 3")
+        let mut header_hash = hash(&self);
+        let mut prev_header = &self.clone();
+        for header in chain {
+            if header.parent != header_hash 
+            || header.height != prev_header.height + 1 
+            || header.state != header.extrinsic + prev_header.extrinsic {
+                return false;
+            }
+            header_hash = hash(header);
+            prev_header = header;
+        }
+        true
     }
 }
 
@@ -56,7 +79,11 @@ impl Header {
 
 /// Build and return a valid chain with the given number of blocks.
 fn build_valid_chain(n: u64) -> Vec<Header> {
-    todo!("Exercise 4")
+    let mut valid_chain: Vec<Header> = vec![Header::genesis()];
+    for i in [..n] {
+        valid_chain.push(valid_chain[valid_chain.len() - 1].clone().child(0));
+    }
+    valid_chain
 }
 
 /// Build and return a chain with at least three headers.
@@ -70,7 +97,15 @@ fn build_valid_chain(n: u64) -> Vec<Header> {
 /// For this function, ONLY USE the the `genesis()` and `child()` methods to create blocks.
 /// The exercise is still possible.
 fn build_an_invalid_chain() -> Vec<Header> {
-    todo!("Exercise 5")
+    let mut prev_header_path_1 = Header::genesis();
+    let mut prev_header_path_2 = prev_header_path_1.clone();
+    let mut invalid_chain: Vec<Header> = vec![prev_header_path_1.clone()];
+    prev_header_path_1 = prev_header_path_1.child(10);
+    prev_header_path_2 = prev_header_path_2.child(20);
+    prev_header_path_2 = prev_header_path_2.child(30);
+    invalid_chain.push(prev_header_path_1.clone());
+    invalid_chain.push(prev_header_path_2.clone());
+    invalid_chain
 }
 
 /// Build and return two header chains.
@@ -85,7 +120,22 @@ fn build_an_invalid_chain() -> Vec<Header> {
 ///
 /// Side question: What is the fewest number of headers you could create to achieve this goal.
 fn build_forked_chain() -> (Vec<Header>, Vec<Header>) {
-    todo!("Exercise 6")
+    let mut prev_header_path_1 = Header::genesis();
+    let mut prev_header_path_2 = prev_header_path_1.clone();
+    let mut forked_chain: (Vec<Header>, Vec<Header>) = (vec![prev_header_path_1.clone()], vec![prev_header_path_2.clone()]);
+    for i in [..2] {
+        prev_header_path_1 = prev_header_path_1.child(1);
+        forked_chain.0.push(prev_header_path_1.clone());
+        forked_chain.1.push(prev_header_path_1.clone());
+    }
+    prev_header_path_2 = prev_header_path_1.clone();
+    for i in [..2] {
+        prev_header_path_1 = prev_header_path_1.child(10);
+        prev_header_path_2 = prev_header_path_2.child(20);
+        forked_chain.0.push(prev_header_path_1.clone());
+        forked_chain.1.push(prev_header_path_2.clone());
+    }
+    forked_chain
 
     // Exercise 7: After you have completed this task, look at how its test is written below.
     // There is a critical thinking question for you there.
@@ -215,5 +265,9 @@ fn bc_2_verify_forked_chain() {
     // Question for students: I've only compared the last blocks here.
     // Is that enough? Is it possible that the two chains have the same final block,
     // but differ somewhere else?
+
+    //Answer to question^: It should not be possible for forking chains to have the same final block. 
+    //the resulting extrinsics/state may end up being the same if blocks were carried out differently, but 
+    //because of the hashing associated with the parent blocks, all of these hashes will still be different.
     assert_ne!(c1.last(), c2.last());
 }
